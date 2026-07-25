@@ -1,0 +1,6 @@
+Plan ID,Department,Work Category,Task Title,Location,Quarter,Execution Mode,Contractor Name,Contract Ref No,Contract Terms,Start Date,End Date,Priority Level,Assigned Team,Budget (ETB),Progress (%),Status
+PLAN-104,Construction,New Project,ግንባታ,tvti,Q1,Outsourced / Contract (በጨረታ),yohanus abay,12385465856.0,በተሰጠዉ ግዜ በጥራት እንዲጨርስ,2026-07-25,2026-07-25,🔴 High / Emergency,ቴዲ አባዲ,0.0,31,In Progress
+PLAN-102,Electrical,Maintenance,ጥገና,ሲኢኢ,Q1,In-House (በውስጥ አቅም),,,,2026-07-25,2026-08-30,🔴 High / Emergency,ዳንኤል ደሳለኝ,0.0,66,In Progress
+PLAN-101,Construction,New Project,ጥገና,ሲኢኢ,Q1,In-House (በውስጥ አቅም),,,,2026-07-25,2026-09-30,🔴 High / Emergency,ቴዲ አባዲ,0.0,46,In Progress
+PLAN-103,Sanitary,Maintenance,ጥገና,ሲኢኢ,Q1,Outsourced / Contract (በጨረታ),,,,2026-07-25,2026-12-30,🔴 High / Emergency,ዳንኤል ደሳለኝ,0.0,10,In Progress
+PLAN-105,Construction,New Project,ግንባታ,አራብሳ,Q1,Outsourced / Contract (በጨረታ),ሜድሮከ ኮንስትራክሽን,8965/236/2026,ጥራቱን ጠበቆ እና በተፈለገዉ ግዜ መድረስ አለበት,2026-07-25,2027-01-25,🔴 High / Emergency,ዳንኤል ጌታቸዉ,100000000.0,5,In Progress
