@@ -60,9 +60,10 @@ st.markdown("""
 # ---------------------------------------------------------
 # HELPER FUNCTIONS, EMAIL & SECURITY
 # ---------------------------------------------------------
+SALT = "TVET_CMMS_ENTERPRISE_SALT_2026"
+
 def hash_password(password: str) -> str:
-    salt = "TVET_CMMS_ENTERPRISE_SALT_2026"
-    return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
+    return hashlib.sha256((password + SALT).encode('utf-8')).hexdigest()
 
 def validate_password_strength(password: str) -> tuple[bool, str]:
     if len(password) < 8:
@@ -256,9 +257,11 @@ def login():
             
             salted_hash = hash_password(input_pass_clean)
 
+            # Check both Hash match and Direct Plain Text match for initial fallback
             user_match = users_df[
                 (users_df["Username"].astype(str).str.strip() == input_user_clean) & 
-                (users_df["Password"].astype(str).str.strip() == salted_hash)
+                ((users_df["Password"].astype(str).str.strip() == salted_hash) | 
+                 (users_df["Password"].astype(str).str.strip() == input_pass_clean))
             ]
 
             if not user_match.empty:
@@ -389,7 +392,7 @@ if active == "📊 Dashboard":
         c1.metric("የተጠናቀቁ ጥገናዎች", len(corrective_df[corrective_df["Status"]=="Completed"]) if not corrective_df.empty else 0)
         c2.metric("ክፍት የጥገና ጥያቄዎች", len(corrective_df[corrective_df["Status"]=="Open"]) if not corrective_df.empty else 0)
         
-        # FIXED: Explicit Numeric Conversion to fix Type Error
+        # Explicit Numeric Conversion to fix Type Error
         if not inventory_df.empty:
             inv_stock = pd.to_numeric(inventory_df["Quantity In Stock"], errors="coerce").fillna(0)
             inv_min = pd.to_numeric(inventory_df["Min Reorder Level"], errors="coerce").fillna(0)
