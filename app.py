@@ -13,38 +13,53 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # ---------------------------------------------------------
-# 1. STREAMLIT PAGE CONFIG & ADVANCED STYLING (v14.0)
+# STREAMLIT PAGE CONFIG & ADVANCED MOBILE-RESPONSIVE STYLING
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="የፌደራል ቲቬት የምህንድስና እና ጥገና ስራ አስፈፃሚ የማኔጅመንት ሲስተም v14.0", 
+    page_title="Federal TVET Management System v14.0", 
     layout="wide", 
     page_icon="🛡️"
 )
 
-# Dark-Navy Theme & Mobile-Responsive CSS Adjustments
+# Modern Dark-Navy/Slate-Blue Theme with Full Mobile Computer-View Support
 st.markdown("""
 <style>
-    .stApp { background-color: #0F172A; color: #F8FAFC; }
-    div[data-testid="stMetricValue"] { font-size: 1.5rem !important; color: #38BDF8 !important; }
+    /* Mobile Computer View Simulation & Responsive Container */
+    .stApp { 
+        background-color: #0F172A; 
+        color: #F8FAFC; 
+        min-width: 1024px !important; /* Forces desktop view consistency on mobile */
+        overflow-x: auto !important;
+    }
+    div[data-testid="stMetricValue"] { font-size: 1.6rem !important; color: #38BDF8 !important; }
     .top-bar-title {
         background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
         color: #F8FAFC;
-        padding: 18px 20px;
+        padding: 18px 24px;
         border-radius: 12px;
         margin-bottom: 20px;
         text-align: center;
         border-bottom: 4px solid #38BDF8;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
     }
-    .top-bar-title h2 { font-size: 1.4rem; font-weight: 700; margin: 0; line-height: 1.4; }
-    .top-bar-title h4 { font-size: 1.0rem; font-weight: 400; color: #94A3B8; margin-top: 5px; }
+    .top-bar-title h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+    .top-bar-title h4 {
+        margin: 5px 0 0 0;
+        font-size: 1.0rem;
+        color: #94A3B8;
+        font-weight: 400;
+    }
     .stButton > button {
         border-radius: 8px;
         font-weight: 600;
         background-color: #2563EB;
         color: white;
         border: none;
-        width: 100%;
     }
     .stButton > button:hover {
         background-color: #1D4ED8;
@@ -52,22 +67,23 @@ st.markdown("""
     }
     .card-box {
         background-color: #1E293B;
-        padding: 16px;
+        padding: 20px;
         border-radius: 10px;
         border: 1px solid #334155;
-        margin-bottom: 12px;
+        margin-bottom: 15px;
     }
-    /* Mobile responsive enhancements */
-    @media (max-width: 768px) {
-        .top-bar-title h2 { font-size: 1.1rem; }
-        .top-bar-title h4 { font-size: 0.85rem; }
-        div[data-testid="column"] { width: 100% !important; flex: 1 1 100% !important; }
+    .narrative-card {
+        background-color: #1E293B;
+        border-left: 4px solid #38BDF8;
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 4px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HELPER FUNCTIONS & SECURITY
+# HELPER FUNCTIONS, EMAIL & SECURITY
 # ---------------------------------------------------------
 SALT = "TVET_CMMS_ENTERPRISE_SALT_2026"
 
@@ -91,6 +107,39 @@ def sanitize_input(text: str) -> str:
     clean_text = re.sub(r'<[^>]*>', '', text)
     return clean_text.replace('"', '&quot;').replace("'", "&#39;").strip()
 
+def send_welcome_email(to_email: str, username: str, temp_pass: str):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = "your-system-email@gmail.com"
+    sender_password = "your-app-password"
+
+    subject = "🔑 Federal TVET CMMS - Account Credentials"
+    body = f"""
+    ሰላም፣
+    
+    በ Federal TVET Enterprise System ላይ አካውንትዎ ተፈጥሯል።
+    
+    Username: {username}
+    Temporary Password: {temp_pass}
+    
+    እባክዎን ሲስተሙ እንደገቡ የይለፍ ቃልዎን ይቅየሩ።
+    """
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception:
+        return False
+
 # ---------------------------------------------------------
 # DATA FILES & AUTOMATED SEED DATA
 # ---------------------------------------------------------
@@ -101,16 +150,14 @@ INVENTORY_FILE = "tvet_inventory.csv"
 PREVENTIVE_FILE = "tvet_preventive_maint.csv"
 CORRECTIVE_FILE = "tvet_corrective_maint.csv"
 REPORT_HISTORY_FILE = "tvet_report_history.csv"
-PROGRESS_LOG_FILE = "tvet_progress_logs.csv"
 
 user_cols = ["Full Name", "Department", "Job Title / Responsibility", "Role Privilege", "Username", "Password", "Email", "Registered Date"]
-plan_cols = ["Plan ID", "Department", "Work Category", "Task Title", "Location", "Quarter", "Execution Mode", "Contractor Name", "Contract Ref No", "Contract Terms", "Start Date", "End Date", "Priority Level", "Assigned Team", "Budget (ETB)", "Progress (%)", "Status"]
+plan_cols = ["Plan ID", "Department", "Work Category", "Task Title", "Location", "Quarter", "Execution Mode", "Contractor Name", "Contract Ref No", "Contract Terms", "Start Date", "End Date", "Priority Level", "Assigned Team", "Budget (ETB)", "Progress (%)", "Status", "Narrative_General", "Narrative_Good", "Narrative_Issues", "Narrative_Resolved", "Narrative_Unresolved"]
 asset_cols = ["Asset ID", "Asset Name", "Category", "Department", "Location", "Purchase Date", "Cost (ETB)", "Condition", "Status", "QR Code Data"]
 inventory_cols = ["Item Code", "Item Name", "Category", "Quantity In Stock", "Min Reorder Level", "Unit Cost (ETB)", "Total Value (ETB)", "Storage Bin"]
 preventive_cols = ["PM ID", "Asset ID / Title", "Frequency", "Assigned Technician", "Last Service Date", "Next Scheduled Date", "Status"]
 corrective_cols = ["Work Order ID", "Asset / Location", "Issue Description", "Reported By", "Reported Date", "Priority", "Technician Assigned", "Status"]
 report_cols = ["Report ID", "Report Title", "Timeframe", "Department Filter", "Module Category", "Generated By", "Generated Date", "Total Records"]
-progress_log_cols = ["Log ID", "Plan ID", "Added Progress (%)", "Cumulative Progress (%)", "Updated Date", "Updated By", "General Status", "Good Aspects", "Challenges", "Solutions", "Unresolved Issues"]
 
 def seed_initial_data():
     if not os.path.exists(USER_FILE):
@@ -123,8 +170,8 @@ def seed_initial_data():
 
     if not os.path.exists(ANNUAL_PLAN_FILE):
         df_plan = pd.DataFrame([
-            ["PLAN-101", "Construction", "New Project", "የአዲስ ግንባታ", "ብሎክ A", "Q1", "In-House (በውስጥ አቅም)", "N/A", "N/A", "N/A", "2026-01-10", "2026-06-30", "🔴 High / Emergency", "ቡድን A", 450000.0, 75, "In Progress"],
-            ["PLAN-102", "Electrical", "Maintenance", "ጥገና", "ዋና ግቢ", "Q2", "Outsourced / Contract (በጨረታ)", "ኤሌክትሪክ", "CNT-2026-09", "የ 1 ዓመት ዋስትና", "2026-02-01", "2026-04-15", "🔴 High / Emergency", "የውጭ ኮንትራክተር", 120000.0, 100, "Completed"]
+            ["PLAN-101", "Construction", "New Project", "የአዲስ አውደ-ጥናት ግንባታ", "ብሎክ A", "Q1", "In-House (በውስጥ አቅም)", "N/A", "N/A", "N/A", "2026-01-10", "2026-06-30", "🔴 High / Emergency", "ቡድን A", 450000.0, 75, "In Progress", "የህንፃው መዋቅር ስራ ተጠናቋል", "የቁሳቁስ አቅርቦት ቀላጣፊ ነበር", "የሲሚንቶ እጥረት አጋጥሞ ነበር", "ከሌላ ፕሮጀክት በማስተላለፍ ተፈትቷል", "ምንም የለም"],
+            ["PLAN-102", "Electrical", "Maintenance", "የዋና ትራንስፎርመር ጥገና", "ዋና ግቢ", "Q2", "Outsourced / Contract (በጨረታ)", "ኢትዮ ኤሌክትሪክ", "CNT-2026-09", "የ 1 ዓመት ዋስትና", "2026-02-01", "2026-04-15", "🔴 High / Emergency", "የውጭ ኮንትራክተር", 120000.0, 100, "Completed", "ስራው ሙሉ በሙሉ ተጠናቋል", "በእቅዱ መሰረት ተሰርቷል", "የለም", "N/A", "የለም"]
         ], columns=plan_cols)
         df_plan.to_csv(ANNUAL_PLAN_FILE, index=False)
 
@@ -158,10 +205,6 @@ def seed_initial_data():
         df_rep = pd.DataFrame(columns=report_cols)
         df_rep.to_csv(REPORT_HISTORY_FILE, index=False)
 
-    if not os.path.exists(PROGRESS_LOG_FILE):
-        df_prog = pd.DataFrame(columns=progress_log_cols)
-        df_prog.to_csv(PROGRESS_LOG_FILE, index=False)
-
 seed_initial_data()
 
 def load_data(file_path, columns):
@@ -184,7 +227,6 @@ inventory_df = load_data(INVENTORY_FILE, inventory_cols)
 preventive_df = load_data(PREVENTIVE_FILE, preventive_cols)
 corrective_df = load_data(CORRECTIVE_FILE, corrective_cols)
 reports_df = load_data(REPORT_HISTORY_FILE, report_cols)
-progress_logs_df = load_data(PROGRESS_LOG_FILE, progress_log_cols)
 
 def process_and_sort_plans(df):
     if df.empty:
@@ -216,7 +258,7 @@ def reset_form_inputs():
     st.session_state.form_key_suffix += 1
 
 def login():
-    st.title("🛡️ Federal TVET - Executive Management Portal")
+    st.title("🛡️ Federal TVET - Enterprise CMMS & ERP Portal")
     st.caption("🔒 የተጠበቀ የሲስተም መግቢያ ገጽ - ህጋዊ የመግቢያ መረጃዎን ያስገቡ")
     
     users_df = load_data(USER_FILE, user_cols)
@@ -267,12 +309,12 @@ else:
     role = "Viewer"
 
 # ---------------------------------------------------------
-# REQUIREMENT 1: UPDATED ENGLISH/AMHARIC PAGE HEADER & TOP NAVIGATION
+# REQUIREMENT 1: UPDATED BILINGUAL PAGE & HEADER TITLE
 # ---------------------------------------------------------
 st.markdown("""
 <div class='top-bar-title'>
-    <h2>የፌደራል ቲቬት የምህንድስና እና ጥገና ስራ አስፈፃሚ የማኔጅመንት ሲስተም</h2>
-    <h4>Federal TVET Engineering & Maintenance Executive Management System (v14.0)</h4>
+    <h2>የፌደራል ቴክኒክና ሙያ ትምህርትና ስልጠና ኢንስቲትዩት የምህንድስና እና ጥገና ስራ አስፈፃሚ የማኔጅመንት ሲስተም</h2>
+    <h4>Federal TVET Institute Engineering and Maintenance Executive Management System (v14.0)</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -310,7 +352,7 @@ st.sidebar.markdown("---")
 active = st.session_state.active_tab
 
 # ---------------------------------------------------------
-# ROUTING & PAGES
+# ROUTING & DYNAMIC SUB-MENUS
 # ---------------------------------------------------------
 
 # --- 1. DASHBOARD ---
@@ -330,8 +372,8 @@ if active == "📊 Dashboard":
         tot_assets = len(assets_df)
 
         k1.metric("ጠቅላላ ፕሮጀክቶች", tot_plans)
-        k2.metric("የተጠናቀቁ ስራዎች", comp_plans)
-        k3.metric("በሂደት ላይ ያሉ ስራዎች", prog_plans)
+        k2.metric("የተጠናቀቁ", comp_plans)
+        k3.metric("በሂደት ላይ ያሉ", prog_plans)
         k4.metric("አማካይ አፈፃፀም", f"{avg_prog:.1f}%")
         k5.metric("ጠቅላላ በጀት", f"{tot_budget:,.0f} ETB")
         k6.metric("የተመዘገቡ ንብረቶች", tot_assets)
@@ -365,25 +407,30 @@ if active == "📊 Dashboard":
                 fig1 = px.histogram(plan_df, x="Department", color="Work Category", barmode="group", text_auto=True, template="plotly_dark")
                 st.plotly_chart(fig1, use_container_width=True)
 
-    # REQUIREMENT 2: Individual Work Performance Dashboard
+    # REQUIREMENT 2: INDIVIDUAL TASK PROGRESS TRACKING ON DASHBOARD
     elif sub_dash == "የእያንዳንዱ ስራ አፈፃፀም":
-        st.subheader("📌 የእያንዳንዱ ስራ እና ፕሮጀክት አፈፃፀም ዝርዝር (Individual Task Dashboard)")
-        if plan_df.empty:
-            st.info("ምንም የተመዘገበ ስራ የለም።")
-        else:
+        st.subheader("📌 የእያንዳንዱ ስራ ዝርዝር አፈፃፀም በዳሽቦርድ (Individual Work Progress)")
+        if not plan_df.empty:
             for idx, row in plan_df.iterrows():
-                prog_val = int(row.get("Progress (%)", 0))
-                st.markdown(f"""
-                <div class='card-box'>
-                    <div style='display: flex; justify-content: space-between; align-items: center;'>
-                        <h4 style='margin:0; color:#38BDF8;'>[{row['Plan ID']}] {row['Task Title']}</h4>
-                        <span style='background-color:#334155; padding:4px 10px; border-radius:6px;'><b>ክፍል:</b> {row['Department']}</span>
-                    </div>
-                    <p style='margin: 8px 0;'><b>ቦታ:</b> {row['Location']} | <b>ኃላፊ ቡድን:</b> {row['Assigned Team']} | <b>በጀት:</b> {row['Budget (ETB)']:,.2f} ETB | <b>ሁኔታ:</b> {row['Status']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                st.progress(prog_val / 100.0, text=f"የስራ አፈፃፀም (Progress): {prog_val}%")
-                st.markdown("<br>", unsafe_allow_html=True)
+                with st.container():
+                    st.markdown(f"#### 🔹 {row['Task Title']} (`{row['Plan ID']}`)")
+                    c_p1, c_p2, c_p3, c_p4 = st.columns([2, 2, 2, 4])
+                    c_p1.write(f"**ክፍል:** {row['Department']}")
+                    c_p2.write(f"**ቦታ:** {row['Location']}")
+                    c_p3.write(f"**ሁኔታ:** `{row['Status']}`")
+                    prog_val = int(row.get("Progress (%)", 0))
+                    c_p4.progress(prog_val / 100, text=f"አፈፃፀም: {prog_val}%")
+                    
+                    if str(row.get("Narrative_General", "")) != "N/A" and str(row.get("Narrative_General", "")) != "":
+                        with st.expander("📝 ዝርዝር የስራ ሁኔታ ናሬሽን (Narrative Breakdown)"):
+                            st.write(f"**A. ስለስራው ጠቅላላ ሁኔታ:** {row.get('Narrative_General', '-')}")
+                            st.write(f"**B. የነበረው መልካም ነገር:** {row.get('Narrative_Good', '-')}")
+                            st.write(f"**C. የነበሩ ችግሮች:** {row.get('Narrative_Issues', '-')}")
+                            st.write(f"**D. ችግሮቹ የተፈቱበት መንገድ:** {row.get('Narrative_Resolved', '-')}")
+                            st.write(f"**E. ያልተፈታ ችግር:** {row.get('Narrative_Unresolved', '-')}")
+                    st.markdown("---")
+        else:
+            st.info("ምንም የተመዘገበ ስራ የለም።")
 
     elif sub_dash == "የጥገና አፈፃፀም":
         st.subheader("🛠️ የጥገና ስራዎች እና የመሳሪያዎች ሁኔታ")
@@ -408,6 +455,7 @@ if active == "📊 Dashboard":
 elif active == "🛠️ Maintenance":
     st.sidebar.markdown("### 🛠️ Maintenance Sub-Menu")
     menu_options = ["የጥገና ጥያቄዎች (Requests)"]
+    # REQUIREMENT 7: EDITOR PRIVILEGE CHECK
     if role in ["Admin", "Editor"]:
         menu_options.append("አዲስ የጥገና ጥያቄ")
         
@@ -421,7 +469,7 @@ elif active == "🛠️ Maintenance":
     elif sub_maint == "አዲስ የጥገና ጥያቄ" and role in ["Admin", "Editor"]:
         k = st.session_state.form_key_suffix
         with st.form(f"corrective_form_{k}"):
-            st.subheader("📝 አዲስ የጥገና ስራ/የጥገና ጥያቄ አስገባ")
+            st.subheader("📝 አዲስ የስብራት/የጥገና ጥያቄ አስገባ")
             c1, c2 = st.columns(2)
             with c1:
                 asset_loc = sanitize_input(st.text_input("የንብረቱ/ቦታው መግለጫ*", key=f"c_loc_{k}"))
@@ -557,7 +605,7 @@ elif active == "📊 Projects":
     st.sidebar.markdown("### 📊 Project Sub-Menu")
     menu_options = ["የስራዎች መዝገብና ኤዲት ማድረጊያ"]
     if role in ["Admin", "Editor"]:
-        menu_options.extend(["አዲስ ስራ መመዝገቢያ (እጅ)", "እቅድ በኤክስኤል መጫኛ (Excel Upload)", "የፕሮግረስ ማዘመኛ እና ናሬሽን"])
+        menu_options.extend(["አዲስ ስራ መመዝገቢያ (Manual)", "እቅድ በኤክስኤል መጫኛ (Excel Import)", "የፕሮግረስ ማዘመኛ"])
         
     sub_proj = st.sidebar.radio("ምረጥ:", menu_options)
     st.title("📊 Project Management")
@@ -566,10 +614,10 @@ elif active == "📊 Projects":
         st.subheader("📋 ሁሉም የተመዘገቡ ስራዎች")
         st.dataframe(plan_df, use_container_width=True)
 
-    elif sub_proj == "አዲስ ስራ መመዝገቢያ (እጅ)" and role in ["Admin", "Editor"]:
+    elif sub_proj == "አዲስ ስራ መመዝገቢያ (Manual)" and role in ["Admin", "Editor"]:
         k = st.session_state.form_key_suffix
         with st.form(f"manual_task_form_{k}"):
-            st.subheader("📝 አዲስ ስራ በአካል (Manual) መመዝገቢያ")
+            st.subheader("📝 አዲስ ስራ በሐጅ (Manual) መመዝገቢያ")
             c1, c2 = st.columns(2)
             with c1:
                 t_dept = st.selectbox("የስራ ዘርፍ", ["Construction", "Electrical", "Sanitary"], key=f"t_dept_{k}")
@@ -596,7 +644,8 @@ elif active == "📊 Projects":
                     new_task_row = pd.DataFrame([[
                         new_id, t_dept, t_cat, t_title, t_loc, t_qtr, 
                         t_mode, c_name, c_ref, c_terms,
-                        str(t_start), str(t_end), t_prio, t_team, t_budget, 0, "Open"
+                        str(t_start), str(t_end), t_prio, t_team, t_budget, 0, "Open",
+                        "N/A", "N/A", "N/A", "N/A", "N/A"
                     ]], columns=plan_cols)
                     
                     plan_df = pd.concat([plan_df, new_task_row], ignore_index=True)
@@ -606,12 +655,12 @@ elif active == "📊 Projects":
                     reset_form_inputs()
                     st.rerun()
 
-    # REQUIREMENT 5: Excel Upload Option for Plan Registration
-    elif sub_proj == "እቅድ በኤክስኤል መጫኛ (Excel Upload)" and role in ["Admin", "Editor"]:
-        st.subheader("📥 እቅድ በ Excel / CSV ፋይል ወደ ሲስተሙ መጫኛ")
-        st.info("💡 ፋይሉ እነዚህን የኮለምን ስሞች ማካተት አለበት፦ " + ", ".join(plan_cols))
+    # REQUIREMENT 5: EXCEL IMPORT FOR ANNUAL PLANS
+    elif sub_proj == "እቅድ በኤክስኤል መጫኛ (Excel Import)" and role in ["Admin", "Editor"]:
+        st.subheader("📥 እቅዶችን በ Excel/CSV ፋይል ጭን (Bulk Import)")
+        st.caption("ፋይሉ እንደ 'Task Title', 'Department', 'Budget (ETB)' ወዘተ ያሉትን ኮለምኖች ማካተት ይኖርበታል።")
+        uploaded_file = st.file_uploader("የ Excel ወይም CSV ፋይል ይምረጡ", type=["xlsx", "xls", "csv"])
         
-        uploaded_file = st.file_uploader("የኤክስኤል ወይም CSV ፋይል ይምረጡ:", type=["xlsx", "xls", "csv"])
         if uploaded_file is not None:
             try:
                 if uploaded_file.name.endswith(".csv"):
@@ -619,72 +668,77 @@ elif active == "📊 Projects":
                 else:
                     imported_df = pd.read_excel(uploaded_file)
                 
-                st.markdown("### 🔍 የተጫነው ኤክስኤል መረጃ ቅድመ-እይታ (Preview):")
+                st.write("📄 **የተጫነው ፋይል ቅድመ-እይታ (Preview):**")
                 st.dataframe(imported_df.head(), use_container_width=True)
                 
-                if st.button("🚀 መረጃውን ወደ ሲስተሙ አዋህድ (Merge to System)"):
-                    for col in plan_cols:
-                        if col not in imported_df.columns:
-                            imported_df[col] = "N/A"
-                    imported_df = imported_df[plan_cols]
-                    
-                    plan_df = pd.concat([plan_df, imported_df], ignore_index=True)
+                if st.button("🚀 መረጃውን ወደ ሲስተሙ ጫን (Process Import)"):
+                    added_count = 0
+                    for _, row in imported_df.iterrows():
+                        new_id = f"PLAN-{len(plan_df) + 101}"
+                        task_title = str(row.get("Task Title", "Untitled Task"))
+                        dept = str(row.get("Department", "Construction"))
+                        cat = str(row.get("Work Category", "New Project"))
+                        loc = str(row.get("Location", "Main Campus"))
+                        qtr = str(row.get("Quarter", "Q1"))
+                        mode = str(row.get("Execution Mode", "In-House (በውስጥ አቅም)"))
+                        budget = float(row.get("Budget (ETB)", 0.0))
+                        
+                        new_task_row = pd.DataFrame([[
+                            new_id, dept, cat, task_title, loc, qtr,
+                            mode, "N/A", "N/A", "N/A",
+                            str(date.today()), str(date.today() + timedelta(days=90)), "🟡 Medium", "ተመዳቢ ቡድን", budget, 0, "Open",
+                            "N/A", "N/A", "N/A", "N/A", "N/A"
+                        ]], columns=plan_cols)
+                        
+                        plan_df = pd.concat([plan_df, new_task_row], ignore_index=True)
+                        added_count += 1
+                        
                     plan_df = process_and_sort_plans(plan_df)
                     save_data(plan_df, ANNUAL_PLAN_FILE)
-                    st.success(f"✅ {len(imported_df)} አዳዲስ እቅዶች በኤክስኤል በስኬት ተጭነዋል!")
+                    st.success(f"✅ በስኬት {added_count} እቅዶች ከኤክስኤል ፋይል ተጭነው ተመዝግበዋል!")
                     st.rerun()
             except Exception as e:
-                st.error(f"⛔ ፋይሉን በማንበብ ላይ ስህተት ተፈጽሟል፦ {e}")
+                st.error(f"ፋይሉን ማንበብ አልተቻለም፦ {e}")
 
-    # REQUIREMENT 4: Cumulative Progress & Detailed Narrative Entry
-    elif sub_proj == "የፕሮግረስ ማዘመኛ እና ናሬሽን" and role in ["Admin", "Editor"]:
-        st.subheader("🛠️ የሥራ ፕሮግረስ እና ዝርዝር ናሬሽን ማዘመኛ (Progress Log & Narration)")
+    # REQUIREMENT 4: INCREMENTAL PROGRESS ADDITION & STRUCTURED NARRATIVE
+    elif sub_proj == "የፕሮግረስ ማዘመኛ" and role in ["Admin", "Editor"]:
+        st.subheader("🛠️ የሥራ ፕሮግረስ እና የናሬሽን ማዘመኛ")
         if not plan_df.empty:
             sel_p = st.selectbox("የሚሰሩትን ስራ ይምረጡ:", plan_df["Plan ID"].dropna().tolist(), key="p_sel_quick")
             p_data = plan_df[plan_df["Plan ID"] == sel_p].iloc[0]
             curr_prog = int(p_data.get("Progress (%)", 0))
             
-            st.info(f"📌 **ያሁኑ ፕሮግረስ (Current Progress):** `{curr_prog}%` | **ስራ:** {p_data['Task Title']}")
+            st.info(f"📌 **የአሁኑ ፕሮግረስ ደረጃ:** {curr_prog}%")
             
-            k = st.session_state.form_key_suffix
-            with st.form(f"progress_narrative_form_{k}"):
-                st.markdown("#### ➕ አዲስ ተጨማሪ ፕሮግረስ እና ናሬሽን መመዝገቢያ")
+            c_pr1, c_pr2 = st.columns(2)
+            with c_pr1:
+                add_prog = st.number_input("➕ የሚደመር ተጨማሪ ፕሮግረስ (%)*", min_value=0, max_value=100-curr_prog, value=0)
+                calculated_prog = curr_prog + add_prog
+                st.write(f"📈 **አዲስ ድምር አፈፃፀም የሚሆነው:** `{calculated_prog}%`")
+            with c_pr2:
+                auto_st = "Open" if calculated_prog == 0 else ("In Progress" if calculated_prog < 100 else "Completed")
+                st.write(f"🔄 **አውቶማቲክ ስታተስ:** `{auto_st}`")
+
+            st.markdown("### 📝 ዝርዝር የስራ ሁኔታ ናሬሽን (Narrative Updates)")
+            n_gen = st.text_area("A. ስለስራው ጠቅላላ ሁኔታ*", value=str(p_data.get("Narrative_General", "")))
+            n_good = st.text_area("B. የነበረው መልካም ነገር*", value=str(p_data.get("Narrative_Good", "")))
+            n_iss = st.text_area("C. የነበሩ ችግሮች*", value=str(p_data.get("Narrative_Issues", "")))
+            n_sol = st.text_area("D. ችግሮቹ የተፈቱበት መንገድ*", value=str(p_data.get("Narrative_Resolved", "")))
+            n_unsol = st.text_area("E. ያልተፈታ ችግር ካለ*", value=str(p_data.get("Narrative_Unresolved", "")))
+
+            if st.button("💾 ፕሮግረስ እና ናሬሽን አዘምን"):
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Progress (%)"] = calculated_prog
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Status"] = auto_st
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Narrative_General"] = sanitize_input(n_gen)
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Narrative_Good"] = sanitize_input(n_good)
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Narrative_Issues"] = sanitize_input(n_iss)
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Narrative_Resolved"] = sanitize_input(n_sol)
+                plan_df.loc[plan_df["Plan ID"] == sel_p, "Narrative_Unresolved"] = sanitize_input(n_unsol)
                 
-                added_prog = st.number_input("የተከናወነ ተጨማሪ ፕሮግረስ (%)*", min_value=0, max_value=100 - curr_prog, value=0, key=f"add_p_{k}")
-                new_cum_prog = curr_prog + added_prog
-                st.write(f"📈 **አዲስ ድምር ፕሮግረስ (Cumulative Total):** `{new_cum_prog}%`")
-                
-                st.markdown("---")
-                st.markdown("##### 📝 የስራ አፈፃፀም ናሬሽን (Performance Narrative):")
-                narr_a = sanitize_input(st.text_area("A. ስለስራው ጠቅላላ ሁኔታ (General Status)*", key=f"narr_a_{k}"))
-                narr_b = sanitize_input(st.text_area("B. የነበረው መልካም ነገር (Good Aspects)", key=f"narr_b_{k}"))
-                narr_c = sanitize_input(st.text_area("C. የነበሩ ችግሮች (Challenges Encountered)", key=f"narr_c_{k}"))
-                narr_d = sanitize_input(st.text_area("D. ችግሮቹ የተፈቱበት መንገድ (Solutions Implemented)", key=f"narr_d_{k}"))
-                narr_e = sanitize_input(st.text_area("E. ያልተፈታ ችግር ካለ (Unresolved Issues)", key=f"narr_e_{k}"))
-                
-                if st.form_submit_button("💾 ፕሮግረስ እና ናሬሽን መዝግብ"):
-                    if added_prog >= 0:
-                        auto_st = "Open" if new_cum_prog == 0 else ("In Progress" if new_cum_prog < 100 else "Completed")
-                        
-                        # Update Annual Plan Data
-                        plan_df.loc[plan_df["Plan ID"] == sel_p, "Progress (%)"] = new_cum_prog
-                        plan_df.loc[plan_df["Plan ID"] == sel_p, "Status"] = auto_st
-                        plan_df = process_and_sort_plans(plan_df)
-                        save_data(plan_df, ANNUAL_PLAN_FILE)
-                        
-                        # Save Detailed Log
-                        log_id = f"LOG-{len(progress_logs_df) + 101}"
-                        new_log = pd.DataFrame([[
-                            log_id, sel_p, added_prog, new_cum_prog, datetime.now().strftime("%Y-%m-%d %H:%M"),
-                            user['Full Name'], narr_a, narr_b, narr_c, narr_d, narr_e
-                        ]], columns=progress_log_cols)
-                        
-                        progress_logs_df = pd.concat([progress_logs_df, new_log], ignore_index=True)
-                        save_data(progress_logs_df, PROGRESS_LOG_FILE)
-                        
-                        st.success(f"✅ ፕሮግረሱ ወደ {new_cum_prog}% አድጓል፤ ዝርዝር ናሬሽኑም በስኬት ተመዝግቧል!")
-                        reset_form_inputs()
-                        st.rerun()
+                plan_df = process_and_sort_plans(plan_df)
+                save_data(plan_df, ANNUAL_PLAN_FILE)
+                st.success("✅ የስራው ፕሮግረስ እና ዝርዝር ናሬሽን በስኬት ተዘምኗል!")
+                st.rerun()
 
 # --- 6. INVENTORY ---
 elif active == "📦 Inventory":
@@ -737,83 +791,102 @@ elif active == "📦 Inventory":
 # --- 7. REPORTS ---
 elif active == "📈 Reports":
     st.sidebar.markdown("### 📈 Reports Sub-Menu")
-    sub_rep = st.sidebar.radio("ምረጥ:", ["የቀን ገደብ ሪፖርት (Date Range Report)", "የተሰሩ ሪፖርቶች ታሪክ (Report History)"])
+    sub_rep = st.sidebar.radio("ምረጥ:", ["የላቀ ሪፖርቶች ማውጫ", "የተሰሩ ሪፖርቶች ታሪክ (Report History)"])
     
-    st.title("📈 Reports & Executive Narrative Analytics")
+    st.title("📈 Reports & AI Narrative Analytics")
     
-    # REQUIREMENT 3: Date-Filtered Reports with Table & Amharic Narration
-    if sub_rep == "የቀን ገደብ ሪፖርት (Date Range Report)":
-        st.subheader("🎯 በቀን ገደብ (From Date - To Date) ሪፖርት ማውጫ")
+    if sub_rep == "የላቀ ሪፖርቶች ማውጫ":
+        st.subheader("🎯 የሚፈልጉትን የሪፖርት መስፈርት እና የጊዜ ገደብ ይምረጡ")
         
+        # REQUIREMENT 3: DATE-RANGE FILTERING (FROM DATE TO DATE)
         r_col1, r_col2, r_col3, r_col4 = st.columns(4)
         with r_col1:
-            from_d = st.date_input("ከቀን (From Date):", value=date.today() - timedelta(days=30))
+            start_d = st.date_input("📅 ከቀን (From Date):", value=date.today() - timedelta(days=90))
         with r_col2:
-            to_d = st.date_input("እስከ ቀን (To Date):", value=date.today())
+            end_d = st.date_input("📅 እስከ ቀን (To Date):", value=date.today())
         with r_col3:
             dept_filter = st.selectbox(
-                "🏢 የሥራ ክፍል (Department):", 
+                "🏢 የሥራ ክፍል:", 
                 ["ሁሁሉም ክፍሎች (All)", "Construction", "Electrical", "Sanitary", "IT / Executive"]
             )
         with r_col4:
             module_filter = st.selectbox(
-                "🛠️ የሪፖርት አይነት (Module):", 
-                ["የፕሮጀክት ስራዎች (Projects Plan)", "የጥገና ስራዎች (Maintenance Work Orders)", "የቅድመ-መከላከል ጥገና (Preventive)"]
+                "🛠️ የሪፖርት አይነት:", 
+                ["የፕሮጀክት ስራዎች (Projects Plan)", "የጥገና ስራዎች (Maintenance Work Orders)", "የቅድመ-መከላከል ጥገና (Preventive)", "የንብረት መዝገብ (Asset Register)", "የመጋዘን እቃዎች (Inventory)"]
             )
             
         st.markdown("---")
         
-        # Filter Logic based on selected module and date
+        filtered_data = pd.DataFrame()
         if module_filter == "የፕሮጀክት ስራዎች (Projects Plan)":
-            base_df = plan_df.copy()
-            date_col = "Start Date"
+            filtered_data = plan_df.copy()
+            if "Start Date" in filtered_data.columns:
+                filtered_data["Temp_Start"] = pd.to_datetime(filtered_data["Start Date"], errors='coerce').dt.date
+                filtered_data = filtered_data[(filtered_data["Temp_Start"] >= start_d) & (filtered_data["Temp_Start"] <= end_d)].drop(columns=["Temp_Start"])
         elif module_filter == "የጥገና ስራዎች (Maintenance Work Orders)":
-            base_df = corrective_df.copy()
-            date_col = "Reported Date"
-        else:
-            base_df = preventive_df.copy()
-            date_col = "Last Service Date"
+            filtered_data = corrective_df.copy()
+            if "Reported Date" in filtered_data.columns:
+                filtered_data["Temp_Rep"] = pd.to_datetime(filtered_data["Reported Date"], errors='coerce').dt.date
+                filtered_data = filtered_data[(filtered_data["Temp_Rep"] >= start_d) & (filtered_data["Temp_Rep"] <= end_d)].drop(columns=["Temp_Rep"])
+        elif module_filter == "የቅድመ-መከላከል ጥገና (Preventive)":
+            filtered_data = preventive_df.copy()
+        elif module_filter == "የንብረት መዝገብ (Asset Register)":
+            filtered_data = assets_df.copy()
+        elif module_filter == "የመጋዘን እቃዎች (Inventory)":
+            filtered_data = inventory_df.copy()
 
-        if not base_df.empty and date_col in base_df.columns:
-            base_df["Temp_Date"] = pd.to_datetime(base_df[date_col], errors='coerce').dt.date
-            filtered_df = base_df[(base_df["Temp_Date"] >= from_d) & (base_df["Temp_Date"] <= to_d)].drop(columns=["Temp_Date"])
-        else:
-            filtered_df = base_df.copy()
-
-        if dept_filter != "ሁሁሉም ክፍሎች (All)" and "Department" in filtered_df.columns:
-            filtered_df = filtered_df[filtered_df["Department"] == dept_filter]
-
-        # A. Table Display
-        st.subheader(f"📊 የሰንጠረዥ ሪፖርት ከ {from_d} እስከ {to_d} ({len(filtered_df)} የተገኙ መረጃዎች)")
-        st.dataframe(filtered_df, use_container_width=True)
+        # REQUIREMENT 3: REPORT OUTPUT IN BOTH TABLE AND NARRATIVE FORMAT
+        st.subheader(f"📊 የሪፖርት ማጠቃለያ ሰንጠረዥ ከ {start_d} እስከ {end_d} ({len(filtered_data)} መረጃዎች)")
+        st.dataframe(filtered_data, use_container_width=True)
         
         st.markdown("---")
+        st.subheader("📝 የሪፖርት ናሬሽን ማጠቃለያ (Narrative Summary Report)")
         
-        # B. Narration Display
-        st.subheader("📝 የሪፖርት ማጠቃለያ ናሬሽን (Executive Summary Narration)")
+        narrative_text = f"""
+        **የኢንስቲትዩቱ የስራ አፈፃፀም ናሬሽን ሪፖርት ({start_d} እስከ {end_d}):**
         
-        total_count = len(filtered_df)
-        if module_filter == "የፕሮጀክት ስራዎች (Projects Plan)" and not filtered_df.empty:
-            avg_p = filtered_df["Progress (%)"].mean()
-            tot_b = filtered_df["Budget (ETB)"].sum()
-            comp_c = len(filtered_df[filtered_df["Status"] == "Completed"])
-            
-            narration_text = f"""
-            **የስራ አፈፃፀም ማጠቃለያ ናሬሽን፦**
-            
-            በተመረጠው የጊዜ ገደብ (**ከ {from_d} እስከ {to_d}**) ውስጥ በ **{dept_filter}** ዘርፍ በጠቅላላ **{total_count}** ስራዎች ተመዝግበው ይገኛሉ። 
-            * **የአፈፃፀም ሁኔታ፦** የፕሮጀክቶቹ አማካይ አፈፃፀም **{avg_p:.1f}%** ሲሆን፣ ከነዚህ ውስጥ **{comp_c}** ፕሮጀክቶች ሙሉ በሙሉ ተጠናቀዋል።
-            * **የበጀት ሁኔታ፦** ለእነዚህ ስራዎች የተመደበው ጠቅላላ በጀት **{tot_b:,.2f} ETB** ነው።
-            * **ያለበት ሁኔታ፦** ስራዎች በተያዘላቸው መርሃ-ግብር መሰረት እየተከናወኑ ይገኛሉ።
-            """
-        else:
-            narration_text = f"""
-            **የስራ አፈፃፀም ማጠቃለያ ናሬሽን፦**
-            
-            በተመረጠው የጊዜ ገደብ (**ከ {from_d} እስከ {to_d}**) ውስጥ በ **{dept_filter}** ዘርፍ በጠቅላላ **{total_count}** የ {module_filter} መረጃዎች ተመዝግበዋል።
-            """
-            
-        st.markdown(f"<div class='card-box'>{narration_text}</div>", unsafe_allow_html=True)
+        * **የሪፖርቱ ዘርፍ:** {module_filter}
+        * **የተመረጠው ክፍል:** {dept_filter}
+        * **አጠቃላይ የተከናወኑ/የተመዘገቡ ስራዎች ብዛት:** {len(filtered_data)}
+        """
+        st.markdown(f"<div class='narrative-card'>{narrative_text}</div>", unsafe_allow_html=True)
+        
+        if module_filter == "የፕሮጀክት ስራዎች (Projects Plan)" and not filtered_data.empty:
+            st.markdown("#### 📌 የተካተቱ የፕሮጀክቶች ዝርዝር ናሬሽን (Project Narratives):")
+            for idx, r_row in filtered_data.iterrows():
+                st.write(f"👉 **ፕሮጀክት:** {r_row['Task Title']} ({r_row['Plan ID']}) - **Progress:** {r_row['Progress (%)']}%")
+                st.write(f"   * **ጠቅላላ ሁኔታ:** {r_row.get('Narrative_General', 'N/A')}")
+                st.write(f"   * **ያጋጠሙ ችግሮች:** {r_row.get('Narrative_Issues', 'N/A')}")
+                st.write(f"   * **የተወሰደ መፍትሔ:** {r_row.get('Narrative_Resolved', 'N/A')}")
+
+        st.markdown("---")
+        st.subheader("🤖 AI Executive Report Narrative (በ Gemini AI የተዘጋጀ ማጠቃለያ)")
+        
+        if st.button("✨ በ AI የሪፖርት ትንተና አፍልቅ (Generate AI Narrative)"):
+            api_key = os.environ.get("GEMINI_API_KEY")
+            if not api_key:
+                st.info("💡 የ AI ትንተና ለማግኘት `GEMINI_API_KEY` Environment Variable ማስተካከል ያስፈልጋል። (የናሙና ማጠቃለያ ከታች ቀርቧል)፦")
+                st.markdown("""
+                > **🤖 AI Summary Analysis:**
+                > * **የስራ ሂደት ሁኔታ:** ከቀን እስከ ቀን ባለው ጊዜ በጥሩ ሁኔታ ላይ ይገኛል፣ 75% ፕሮጀክቶች በተያዘላቸው ጊዜ እየተከናወኑ ነው።
+                > * **በጥሩ ሁኔታ የተከናወኑ:** የልዩ ጥገናዎች በጊዜ መጠናቀቅ።
+                > * **ሊስተካከሉ የሚገባቸው:** የመጋዘን መለዋወጫዎች በጊዜ መተካት አለባቸው።
+                > * **የውሳኔ ሃሳብ (Recommendation):** የቅድመ-መከላከል ጥገናዎችን ማፋጠን።
+                """)
+            else:
+                try:
+                    from google import genai
+                    client = genai.Client(api_key=api_key)
+                    prompt = f"አጠቃላይ የኢትዮጵያ TVET ተቋም ከ {start_d} እስከ {end_d} ያለው {module_filter} ዳታ ይህ ነው፦ {filtered_data.to_string()}። እባክህ የስራ ሂደቱን፣ በጥሩ ሁኔታ የተከናወኑትን፣ ሊስተካከሉ የሚገባቸውን እና የውሳኔ ሃሳቦችን በአማርኛ ማጠቃለያ ፃፍልኝ።"
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt
+                    )
+                    st.success("✅ AI Narrative Analysis በስኬት ተዘጋጅቷል፦")
+                    st.write(response.text)
+                except Exception as e:
+                    st.error(f"AI ትንተና ማፍለቅ አልተቻለም፦ {e}")
 
     elif sub_rep == "የተሰሩ ሪፖርቶች ታሪክ (Report History)":
         st.subheader("📜 ቀደም ሲል ተዘጋጅተው የተመዘገቡ ሪፖርቶች")
@@ -840,7 +913,7 @@ elif active == "👥 Users":
             st.write(f"**የስልጣን ደረጃ:** `{role}`")
 
     elif sub_user == "አዲስ ተጠቃሚ መመዝገቢያ" and role == "Admin":
-        st.subheader("👥 አዲስ ተጠቃሚ መመዝገቢያ")
+        st.subheader("👥 አዲስ ተጠቃሚ መመዝገቢያ (ከኢሜይል ማሳወቂያ ጋር)")
         k = st.session_state.form_key_suffix
         with st.form(f"reg_u_form_{k}"):
             f_name = sanitize_input(st.text_input("ሙሉ ስም*", key=f"u_fname_{k}"))
@@ -851,7 +924,7 @@ elif active == "👥 Users":
             u_name = sanitize_input(st.text_input("Username*", key=f"u_uname_{k}"))
             u_pass = st.text_input("Password*", type="password", key=f"u_pass_{k}")
             
-            if st.form_submit_button("🔒 ተጠቃሚውን መዝግብ"):
+            if st.form_submit_button("🔒 ተጠቃሚውን መዝግብ እና ኢሜይል ላክ"):
                 is_valid, msg = validate_password_strength(u_pass)
                 if not is_valid:
                     st.error(f"⛔ የደህንነት ስጋት፦ {msg}")
@@ -862,7 +935,12 @@ elif active == "👥 Users":
                     new_u = pd.DataFrame([[f_name, u_dept, j_title, u_role, u_name, secure_pass, u_email, datetime.now().strftime("%Y-%m-%d")]], columns=user_cols)
                     users_df = pd.concat([users_df, new_u], ignore_index=True)
                     save_data(users_df, USER_FILE)
-                    st.success(f"✅ ተጠቃሚ {f_name} በስኬት ተመዝግቧል!")
+                    
+                    email_status = send_welcome_email(u_email, u_name, u_pass)
+                    if email_status:
+                        st.success(f"✅ ተጠቃሚ {f_name} ተመዝግቧል፤ የመግቢያ መረጃ ወደ {u_email} በኢሜይል ተልኳል!")
+                    else:
+                        st.success(f"✅ ተጠቃሚ {f_name} ተመዝግቧል! (ማስታወሻ፦ ኢሜይሉን ለመላክ የ SMTP ቅንብር ያስፈልጋል)")
                     reset_form_inputs()
                     st.rerun()
 
@@ -871,4 +949,4 @@ elif active == "⚙️ Settings":
     st.sidebar.markdown("### ⚙️ Settings Sub-Menu")
     sub_set = st.sidebar.radio("ምረጥ:", ["የሲስተም ቅንብሮች እና Backup"])
     st.title("⚙️ System Settings & Security")
-    st.success("✅ Federal TVET Executive Management System v14.0 Status: Online & Operational.")
+    st.success("✅ Federal TVET Management System Suite v14.0 System Status: Online & Operational.")
