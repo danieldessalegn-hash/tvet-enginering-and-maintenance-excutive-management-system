@@ -170,7 +170,7 @@ def seed_initial_data():
 
     if not os.path.exists(ANNUAL_PLAN_FILE):
         df_plan = pd.DataFrame([
-            ["PLAN-101", "Construction", "New Project", "የአዲስ አውደ-ጥናት ግንባታ", "ብሎክ A", "Q1", "In-House (በውስጥ አቅም)", "N/A", "N/A", "N/A", "2026-01-10", "2026-06-30", "🔴 High / Emergency", "ቡድን A", 450000.0, 75, "In Progress", "የህንፃው መዋቅር ስራ ተጠናቋል", "የቁሳቁስ አቅርቦት ቀላጣፊ ነበር", "የሲሚንቶ እጥረት አጋጥሞ ነበር", "ከሌላ ፕሮጀክት በማስተላለፍ ተፈትቷል", "ምንም የለም"],
+            ["PLAN-101", "Construction", "New Project", "የአዲስ ግንባታ", "ብሎክ A", "Q1", "In-House (በውስጥ አቅም)", "N/A", "N/A", "N/A", "2026-01-10", "2026-06-30", "🔴 High / Emergency", "ቡድን A", 450000.0, 75, "In Progress", "የህንፃው መዋቅር ስራ ተጠናቋል", "የቁሳቁስ አቅርቦት ቀላጣፊ ነበር", "የሲሚንቶ እጥረት አጋጥሞ ነበር", "ከሌላ ፕሮጀክት በማስተላለፍ ተፈትቷል", "ምንም የለም"],
             ["PLAN-102", "Electrical", "Maintenance", "የዋና ትራንስፎርመር ጥገና", "ዋና ግቢ", "Q2", "Outsourced / Contract (በጨረታ)", "ኢትዮ ኤሌክትሪክ", "CNT-2026-09", "የ 1 ዓመት ዋስትና", "2026-02-01", "2026-04-15", "🔴 High / Emergency", "የውጭ ኮንትራክተር", 120000.0, 100, "Completed", "ስራው ሙሉ በሙሉ ተጠናቋል", "በእቅዱ መሰረት ተሰርቷል", "የለም", "N/A", "የለም"]
         ], columns=plan_cols)
         df_plan.to_csv(ANNUAL_PLAN_FILE, index=False)
@@ -469,7 +469,7 @@ elif active == "🛠️ Maintenance":
     elif sub_maint == "አዲስ የጥገና ጥያቄ" and role in ["Admin", "Editor"]:
         k = st.session_state.form_key_suffix
         with st.form(f"corrective_form_{k}"):
-            st.subheader("📝 አዲስ የስብራት/የጥገና ጥያቄ አስገባ")
+            st.subheader("📝 አዲስ ጥገና/የጥገና ጥያቄ አስገባ")
             c1, c2 = st.columns(2)
             with c1:
                 asset_loc = sanitize_input(st.text_input("የንብረቱ/ቦታው መግለጫ*", key=f"c_loc_{k}"))
@@ -807,7 +807,7 @@ elif active == "📈 Reports":
         with r_col3:
             dept_filter = st.selectbox(
                 "🏢 የሥራ ክፍል:", 
-                ["ሁሁሉም ክፍሎች (All)", "Construction", "Electrical", "Sanitary", "IT / Executive"]
+                ["ሁሉም ክፍሎች (All)", "Construction", "Electrical", "Sanitary", "IT / Executive"]
             )
         with r_col4:
             module_filter = st.selectbox(
